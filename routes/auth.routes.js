@@ -9,8 +9,9 @@ router.get('/signup', (req, res, next) => {
 
 router.post('/signup', async (req, res, next) => {
     const payload = { ...req.body };
+    delete payload.password
     const salt = bcrypt.genSaltSync(13);
-    payload.passwordHash = bcrypt.hashSync(payload.password, salt);
+    payload.passwordHash = bcrypt.hashSync(req.body.password, salt);
 
     try {
         const newUser = await User.create(payload);
@@ -33,12 +34,17 @@ router.post('/login', async (req, res, next) => {
         if (checkedUser) {
             if (bcrypt.compareSync(currentUser.password, checkedUser.passwordHash)) {
                 const loggedInUser = { ...checkedUser._doc };
-                delete loggedInUser.passwordHash
-                res.redirect('/profile')
+                delete loggedInUser.passwordHash;
+                req.session.user = loggedInUser;
+                console.log(req.session.user);
+                res.redirect('/profile');
             } else {
                 console.log('Incorrect password');
                 res.render('auth/login', {errorMessage: 'Try again!'});
             }
+        } else {
+            console.log('No user with this email')
+            res.render('auth/login', {errorMessage: 'Try again!'});
         }
     } catch (error) {
         console.log(error);
