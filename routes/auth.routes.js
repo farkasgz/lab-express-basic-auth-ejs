@@ -14,7 +14,32 @@ router.post('/signup', async (req, res, next) => {
 
     try {
         const newUser = await User.create(payload);
-        res.send(newUser)
+        res.redirect('login');
+    } catch (error) {
+        console.log(error);
+    }
+})
+
+router.get('/login', (req, res, next) => {
+    res.render('auth/login')
+})
+
+router.post('/login', async (req, res, next) => {
+    console.log(req.body)
+    try {
+        const currentUser = req.body;
+        const checkedUser = await User.findOne({ name: currentUser.name });
+
+        if (checkedUser) {
+            if (bcrypt.compareSync(currentUser.password, checkedUser.passwordHash)) {
+                const loggedInUser = { ...checkedUser._doc };
+                delete loggedInUser.passwordHash
+                res.redirect('/profile')
+            } else {
+                console.log('Incorrect password');
+                res.render('auth/login', {errorMessage: 'Try again!'});
+            }
+        }
     } catch (error) {
         console.log(error);
     }
