@@ -15,7 +15,7 @@ router.post('/signup', async (req, res, next) => {
 
     try {
         const newUser = await User.create(payload);
-        res.redirect('login');
+        res.redirect('/auth/login');
     } catch (error) {
         console.log(error);
     }
@@ -28,12 +28,11 @@ router.get('/login', (req, res, next) => {
 router.post('/login', async (req, res, next) => {
     console.log(req.body)
     try {
-        const currentUser = req.body;
-        const checkedUser = await User.findOne({ name: currentUser.name });
+        const checkedUser = await User.findOne({ username: req.body.username });  
 
         if (checkedUser) {
-            if (bcrypt.compareSync(currentUser.password, checkedUser.passwordHash)) {
-                const loggedInUser = { ...checkedUser._doc };
+            if (bcrypt.compareSync(req.body.password, checkedUser.passwordHash)) {
+                const loggedInUser = checkedUser;
                 delete loggedInUser.passwordHash;
                 req.session.user = loggedInUser;
                 console.log(req.session.user);
